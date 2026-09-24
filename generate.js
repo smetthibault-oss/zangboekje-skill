@@ -52,9 +52,10 @@ function anton(text, size, opts = {}) {
   return new TextRun({ text, font: 'Anton', size, ...opts });
 }
 
-function titleBlock(subtitle) {
+function titleBlock(subtitle, { pageBreakBefore = false } = {}) {
   return [
     new Paragraph({
+      pageBreakBefore,
       spacing: { before: 0, after: 0, line: 276, lineRule: 'auto' },
       children: [
         anton('ZIE ZE ZINGEN!', 112, { bold: true }),
@@ -121,12 +122,12 @@ function contactParagraphs(alignment = AlignmentType.LEFT) {
 }
 // Logo en contactgegevens naast elkaar (zoals de blauwdruk), als geheel gecentreerd.
 function logoAndContact(px) {
-  return [footerTable([2800, 5430], [[logoParagraph(px)], contactParagraphs()], { alignment: AlignmentType.CENTER })];
+  return [footerTable([2800, 5430], [[logoParagraph(px)], contactParagraphs()])];
 }
 function firstPageFooter() { return new Footer({ children: logoAndContact(165) }); }
 function songFooter() {
   return new Footer({
-    children: [footerTable([1900, 5130, 1900], [
+    children: [footerTable([2111, 4000, 2819], [
       [pageNumberParagraph()],
       [logoParagraph(115)],
       [new Paragraph({
@@ -137,7 +138,6 @@ function songFooter() {
     ])],
   });
 }
-function aboutFooter() { return new Footer({ children: [pageNumberParagraph(), ...logoAndContact(165)] }); }
 
 function docLinesToParagraphs(lines) {
   const paragraphs = [];
@@ -171,11 +171,12 @@ const WIE_ZIJN_WE_TEKST = [
 
 function wieZijnWe() {
   return [
-    ...titleBlock('Wie zijn we?'),
-    ...WIE_ZIJN_WE_TEKST.map(text => new Paragraph({
-      spacing: { before: 240, after: 240, line: 276, lineRule: 'auto' },
+    ...titleBlock('Wie zijn we?', { pageBreakBefore: true }),
+    ...WIE_ZIJN_WE_TEKST.map((text, i) => new Paragraph({
+      spacing: { before: i === 0 ? 240 : 0, after: 180, line: 276, lineRule: 'auto' },
       children: [t(text)],
     })),
+    ...contactParagraphs(AlignmentType.CENTER),
   ];
 }
 
@@ -205,6 +206,8 @@ async function genereerZangboekje({ locatie, datum, songs }) {
     }
   });
 
+  children.push(...wieZijnWe());
+
   const pageProps = {
     page: {
       size: { width: 11906, height: 16838 },
@@ -221,11 +224,6 @@ async function genereerZangboekje({ locatie, datum, songs }) {
         footers: { first: firstPageFooter(), default: songFooter() },
         children,
       },
-      {
-        properties: { ...pageProps, titlePage: false },
-        footers: { default: aboutFooter() },
-        children: wieZijnWe(),
-      },
     ],
   });
 
@@ -237,7 +235,7 @@ module.exports = { genereerZangboekje };
 // ─── CLI ────────────────────────────────────────────────────────────────────
 
 if (require.main === module) {
-  const [payloadPath, outputPath] = process.argv.slice(2);
+  const [payloadPath, outputPath, uploadArg] = process.argv.slice(2);
   if (!payloadPath || !outputPath) {
     console.error('Gebruik: node generate.js payload.json output.docx');
     process.exit(1);
@@ -247,6 +245,22 @@ if (require.main === module) {
     .then(buffer => {
       fs.writeFileSync(outputPath, buffer);
       console.log(`OK: ${outputPath} (${Math.round(buffer.length / 1024)} KB, ${payload.songs.length} liedjes)`);
+
+      // Optioneel: kopieer het resultaat naar een map die door Google Drive voor
+      // desktop gesynchroniseerd wordt = "direct uploaden naar Drive".
+      // Map via 3e argument, env ZANGBOEKJE_UPLOADMAP of het bestand uploadmap.txt.
+      let uploadMap = uploadArg || process.env.ZANGBOEKJE_UPLOADMAP;
+      const cfg = path.join(__dirname, 'uploadmap.txt');
+      if (!uploadMap && fs.existsSync(cfg)) uploadMap = fs.readFileSync(cfg, 'utf-8').trim();
+      if (uploadMap) {
+        if (!fs.existsSync(uploadMap)) {
+          console.error(`WAARSCHUWING: uploadmap bestaat niet: ${uploadMap} (niet gekopieerd)`);
+        } else {
+          const target = path.join(uploadMap, path.basename(outputPath));
+          fs.copyFileSync(outputPath, target);
+          console.log(`GEKOPIEERD NAAR DRIVE-MAP: ${target}`);
+        }
+      }
     })
     .catch(err => {
       console.error('FOUT:', err.message);

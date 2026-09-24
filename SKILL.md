@@ -36,11 +36,13 @@ Haal vóór je begint de laatste versie op, zodat aanpassingen van Thibault
 (opmaak, teksten, fixes) automatisch meekomen:
 
 ```bash
-git pull --ff-only
+git fetch origin && git reset --hard origin/main
 ```
 
-(Working directory = deze skill-map.) Als er iets nieuws binnenkwam in
-`package.json`, draai dan ook `npm install`. Als `git pull` faalt (geen
+(Working directory = deze skill-map.) De skill is alleen-lezen voor gebruikers: enkel Thibault past hem aan (in de
+GitHub-repo); lokale wijzigingen in deze map worden bij elke update overschreven.
+Als er iets nieuws binnenkwam in
+`package.json`, draai dan ook `npm install`. Als dit faalt (geen
 internet, of de map is geen git-clone omdat de skill uit een zip kwam), ga dan
 gewoon verder met de lokale versie en zeg er kort bij dat de skill mogelijk niet
 up-to-date is — blokkeer de rest van de workflow er niet op.
@@ -108,11 +110,28 @@ node generate.js tmp/payload.json "tmp/2026-10-22 WZC Ter Hovingen.docx"
 Bij de eerste keer op een machine: als dit faalt met `Cannot find module 'docx'`,
 draai eerst `npm install` in deze map en probeer opnieuw.
 
-### Stap 6 — Opleveren
+### Stap 6 — Uploaden naar Drive (optioneel) en opleveren
 
-Bevestig het resultaat (bestandsgrootte + aantal liedjes staat in de output)
-en geef het `.docx`-bestand aan de gebruiker (SendUserFile of gelijkaardig,
-afhankelijk van de omgeving).
+`generate.js` kan het resultaat meteen in een door **Google Drive voor desktop**
+gesynchroniseerde map zetten, zodat het vanzelf in Drive verschijnt (bv. de map
+"zangboekjes"). Geef die map mee als 3e argument, of zet ze eenmalig in het
+bestand `uploadmap.txt` in deze skill-map (één regel, het volledige pad; dat
+bestand is per computer en wordt niet overschreven bij updates):
+
+```bash
+node generate.js tmp/payload.json "tmp/2026-10-22 WZC Ter Hovingen.docx" "G:/Mijn Drive/zangboekjes"
+```
+
+- Bestaat er al een `uploadmap.txt`, gebruik die dan gewoon (geen 3e argument nodig).
+- Is er nog geen uploadmap ingesteld: vraag de gebruiker één keer of hij/zij Google
+  Drive voor desktop gebruikt en in welke map de zangboekjes moeten komen, schrijf
+  dat pad in `uploadmap.txt`, en genereer opnieuw. Heeft de gebruiker geen Drive
+  voor desktop, sla het uploaden dan over.
+- Upload de .docx **niet** via de Drive-connector (`create_file` met base64): het
+  bestand is ~800 KB, veel te groot om betrouwbaar door te geven.
+
+Bevestig het resultaat (output toont "GEKOPIEERD NAAR DRIVE-MAP" als het gelukt is)
+en geef het `.docx`-bestand aan de gebruiker (SendUserFile of gelijkaardig).
 
 ## Kwaliteitscontrole
 
@@ -122,6 +141,6 @@ afhankelijk van de omgeving).
   veel af van de opgegeven `naam`; pas dan zo nodig de `naam` aan zodat hij dichter
   bij de brontekst-titel ligt.
 - Een herhaald refrein staat er als kort **REFREIN**, niet als de volledige tekst.
-- Elke liedjespagina heeft een paginanummer links, logo in het midden, QR rechts
-  in de voettekst; de eerste en laatste pagina tonen het logo + contactgegevens
-  gecentreerd onderaan.
+- Elke pagina behalve de eerste heeft in de voettekst paginanummer links, logo in
+  het midden, QR rechts (ook de laatste "Wie zijn we?"-pagina). De eerste pagina
+  toont onderaan logo + contactgegevens naast elkaar.
