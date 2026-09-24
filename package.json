@@ -1,0 +1,10 @@
+{
+  "name": "zangboekje-lokaal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Losse zangboekje-generator voor de Claude-skill (geen server nodig).",
+  "main": "generate.js",
+  "dependencies": {
+    "docx": "^8.5.0"
+  }
+}
