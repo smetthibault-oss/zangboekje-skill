@@ -92,12 +92,24 @@ Schrijf (Write-tool) een JSON-bestand, bv. naar
 }
 ```
 
-- `naam`: exact zoals de gebruiker die opgaf (titel + artiest).
-- `lyrics`: de opgehaalde tekst. Verwijder de titel-regel niet zelf — dat doet
-  het script (het herkent en negeert een eerste regel die op de titel lijkt).
-- Een lege regel = een stanza/coupletbreuk. Een regel die uitsluitend
-  "Refrein", "Chorus", "Ref" (met of zonder ":") is, wordt automatisch **vet**
-  "REFREIN" — typ in dat geval de volledige refreintekst dus niet nog eens uit.
+- `naam`: titel + artiest, zoals die in de Drive-bestandsnaam staat (of zoals de
+  gebruiker het opgaf als dat netter is).
+- `lyrics`: de opgehaalde tekst, **letterlijk en ongewijzigd** (de connector levert
+  markdown: `**vet**`, `*cursief*`, `### kop`, lege alinea's als regel met spaties — het
+  script begrijpt dat formaat zelf, ook de `****`-artefacten tussen vette regels).
+  Het enige dat jij aanpast:
+  - **Verwijder de titelregel(s) bovenaan** als die de titel van het liedje zijn
+    (meestal `### **13. Titel - ARTIEST**` of een vetgedrukte eerste regel met
+    nummer/artiest). Is de eerste regel gewoon liedtekst, laat ze dan staan —
+    verwijder nooit echte tekst.
+  - **Knip er andere liedjes uit** die per ongeluk achter dit liedje in hetzelfde
+    document staan (bv. een volledig tweede lied met eigen kop na het laatste refrein).
+- Een regel die uitsluitend "Refrein", "Chorus", "Ref" (met of zonder ":") is, wordt
+  automatisch **vet** "REFREIN" — typ in dat geval de volledige refreintekst dus niet
+  nog eens uit.
+- **Bestaat een gevraagd liedje (of een deel van een mashup) niet in Drive**: verzin
+  of "reconstrueer" nooit liedtekst. Laat het liedje weg en meld het expliciet aan het
+  eind aan de gebruiker.
 
 ### Stap 5 — Genereren
 
